@@ -36,7 +36,7 @@ const sidebarMenuItems = [
 export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user } = useAuthStore()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
 

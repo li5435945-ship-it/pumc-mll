@@ -15,7 +15,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Redis
-redis[hiredis]==5.1.0
+redis[hiredis]==4.5.5
 arq==0.26
 
 # HTTP client

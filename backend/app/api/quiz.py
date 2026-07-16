@@ -42,11 +42,19 @@ class AttemptAnswerRequest(BaseModel):
 # ── helpers ────────────────────────────────────────────────────────
 
 
-async def _get_chapter_or_404(chapter_id: int, db: AsyncSession) -> Chapter:
+async def _get_chapter_or_404(chapter_id: int, db: AsyncSession, check_published: bool = True) -> Chapter:
     result = await db.execute(select(Chapter).where(Chapter.id == chapter_id))
     chapter = result.scalar_one_or_none()
     if not chapter:
         raise HTTPException(status_code=404, detail="章节不存在")
+
+    # Check if parent course is published (for student-facing endpoints)
+    if check_published:
+        from app.models import Course
+        course = await db.get(Course, chapter.course_id)
+        if not course or course.status != "published":
+            raise HTTPException(status_code=404, detail="章节不存在")
+
     return chapter
 
 

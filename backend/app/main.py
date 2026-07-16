@@ -36,16 +36,8 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
-# CORS - different origins for dev/prod
-if settings.ENVIRONMENT == "production":
-    allowed_origins = [
-        "https://your-domain.com",  # TODO: Replace with actual domain
-    ]
-else:
-    allowed_origins = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-    ]
+# CORS - allow all origins for now (restrict in production with actual domain)
+allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,

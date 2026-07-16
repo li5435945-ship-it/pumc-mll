@@ -43,6 +43,10 @@ async def _get_chapter_with_course(chapter_id: int, db: AsyncSession) -> tuple[C
     if not course:
         raise HTTPException(status_code=404, detail="课程不存在")
 
+    # Check if course is published (student-facing endpoint)
+    if course.status != "published":
+        raise HTTPException(status_code=404, detail="章节不存在")
+
     return chapter, course
 
 

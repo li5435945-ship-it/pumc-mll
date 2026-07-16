@@ -29,7 +29,7 @@ function useIsMobile(breakpoint = 768) {
 export default function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user } = useAuthStore()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
 

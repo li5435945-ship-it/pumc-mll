@@ -67,7 +67,7 @@ export default function AdminCourseDetailPage() {
       try {
         const [courseRes, chaptersRes] = await Promise.all([
           api.get<never, ApiResponse<CourseAdmin>>(`/admin/courses/${courseId}`),
-          api.get<never, ApiResponse<ChapterAdmin[]>>(`/courses/${courseId}/chapters`),
+          api.get<never, ApiResponse<ChapterAdmin[]>>(`/admin/courses/${courseId}/chapters`),
         ])
         if (courseRes.data) {
           setCourse(courseRes.data)
@@ -144,7 +144,7 @@ export default function AdminCourseDetailPage() {
   // Import success callback
   const handleImportSuccess = () => {
     // Refetch chapters
-    api.get<never, ApiResponse<ChapterAdmin[]>>(`/courses/${courseId}/chapters`).then((res) => {
+    api.get<never, ApiResponse<ChapterAdmin[]>>(`/admin/courses/${courseId}/chapters`).then((res) => {
       if (res.data) setChapters(res.data)
     })
   }
@@ -355,7 +355,7 @@ export default function AdminCourseDetailPage() {
           onClose={() => setRagDrawerOpen(false)}
           onSaved={() => {
             // 刷新章节列表
-            api.get<never, ApiResponse<ChapterAdmin[]>>(`/courses/${courseId}/chapters`).then((res) => {
+            api.get<never, ApiResponse<ChapterAdmin[]>>(`/admin/courses/${courseId}/chapters`).then((res) => {
               if (res.data) setChapters(res.data)
             })
           }}
