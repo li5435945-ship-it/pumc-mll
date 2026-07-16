@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+venv/
+.env
+*.db
+
+# Node
+node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Docker
+pgdata/
+redisdata/
+
+# Test/Debug files
+backend/*_debug.txt
+backend/*_check.txt
+backend/*_result.txt
+backend/raw_sse.txt
+backend/template_*.txt
+backend/test_output.txt

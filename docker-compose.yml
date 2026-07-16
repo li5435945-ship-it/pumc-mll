@@ -1,0 +1,73 @@
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: pumc-db
+    environment:
+      POSTGRES_DB: pumc_mll
+      POSTGRES_USER: pumc
+      POSTGRES_PASSWORD: pumc123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pumc -d pumc_mll"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pumc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  backend:
+    build: ./backend
+    container_name: pumc-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - uploads:/app/uploads
+
+  worker:
+    build: ./backend
+    container_name: pumc-worker
+    command: arq app.worker.WorkerSettings
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: pumc-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
