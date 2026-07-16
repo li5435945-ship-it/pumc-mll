@@ -332,9 +332,28 @@ export default function AdminCourseDetailPage() {
       <Card style={{ marginBottom: isMobile ? 12 : 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
           <Title level={4} style={{ margin: 0 }}>{course.name}</Title>
-          <Tag color={course.status === 'published' ? 'green' : 'default'}>
-            {course.status === 'published' ? '已发布' : '草稿'}
-          </Tag>
+          <Space>
+            <Tag color={course.status === 'published' ? 'green' : 'default'}>
+              {course.status === 'published' ? '已发布' : '草稿'}
+            </Tag>
+            <Button
+              type={course.status === 'published' ? 'default' : 'primary'}
+              size="small"
+              danger={course.status === 'published'}
+              onClick={async () => {
+                const newStatus = course.status === 'published' ? 'draft' : 'published'
+                try {
+                  await api.put(`/admin/courses/${courseId}`, { status: newStatus })
+                  setCourse({ ...course, status: newStatus })
+                  message.success(newStatus === 'published' ? '课程已发布' : '课程已取消发布')
+                } catch {
+                  message.error('操作失败')
+                }
+              }}
+            >
+              {course.status === 'published' ? '取消发布' : '发布课程'}
+            </Button>
+          </Space>
         </div>
         {course.intro && <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>{course.intro}</Text>}
         <Descriptions column={isMobile ? 1 : 3} size="small" style={{ marginTop: 16 }}>
