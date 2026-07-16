@@ -29,7 +29,9 @@ async def get_current_user(
     if redis:
         session_key = f"session:{user_id}"
         stored_token = await redis.get(session_key)
-        if stored_token is not None and stored_token != token:
+        if stored_token is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="未登录或会话已失效")
+        if stored_token != token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="会话已过期或被踢出")
 
     result = await db.execute(

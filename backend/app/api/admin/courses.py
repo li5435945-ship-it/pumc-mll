@@ -285,7 +285,45 @@ async def create_chapter(
     })
 
 
-# ── 7. POST /admin/courses/{id}/cover ─────────────────────────────
+# ── 8. PUT /admin/chapters/{id} ────────────────────────────────────
+
+@router.put("/chapters/{chapter_id}", response_model=ApiResponse[dict])
+async def update_chapter(
+    chapter_id: int,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+):
+    """Update a chapter's info (name, sort_order, open_at)."""
+    result = await db.execute(select(Chapter).where(Chapter.id == chapter_id))
+    chapter = result.scalar_one_or_none()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="章节不存在")
+
+    # Update fields if provided
+    if "name" in body:
+        chapter.name = body["name"]
+    if "sort_order" in body:
+        chapter.sort_order = body["sort_order"]
+    if "open_at" in body:
+        chapter.open_at = body["open_at"]
+
+    await db.flush()
+    await db.refresh(chapter)
+
+    return ApiResponse(data={
+        "id": chapter.id,
+        "course_id": chapter.course_id,
+        "name": chapter.name,
+        "sort_order": chapter.sort_order,
+        "open_at": str(chapter.open_at) if chapter.open_at else None,
+        "rag_enabled": chapter.rag_enabled,
+        "created_at": chapter.created_at.isoformat() if chapter.created_at else None,
+        "updated_at": chapter.updated_at.isoformat() if chapter.updated_at else None,
+    })
+
+
+# ── 9. POST /admin/courses/{id}/cover ─────────────────────────────
 
 @router.post("/courses/{course_id}/cover", response_model=ApiResponse[dict])
 async def upload_cover(
