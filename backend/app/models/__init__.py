@@ -49,8 +49,6 @@ class Chapter(Base):
     sort_order = Column(Integer, default=0)
     open_at = Column(TIMESTAMP)
     rag_enabled = Column(Boolean, default=False)
-    rag_doc_count = Column(Integer, default=0)
-    rag_chunk_count = Column(Integer, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

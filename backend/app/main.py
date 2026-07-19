@@ -18,7 +18,6 @@ from app.api.auth import router as auth_router
 from app.api.courses import router as courses_router
 from app.api.quiz import chapters_router as quiz_chapters_router
 from app.api.quiz import attempts_router as quiz_attempts_router
-from app.api.wrong_questions import router as wrong_questions_router
 from app.api.ai import router as ai_router
 from app.api.admin.chapter_rag import router as admin_rag_router
 from app.api.admin.import_excel import router as admin_import_router
@@ -57,7 +56,6 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(courses_router, prefix="/api")
 app.include_router(quiz_chapters_router, prefix="/api")
 app.include_router(quiz_attempts_router, prefix="/api")
-app.include_router(wrong_questions_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
 app.include_router(admin_courses_router, prefix="/api")  # Admin courses (must be before rag)
 app.include_router(admin_rag_router, prefix="/api")

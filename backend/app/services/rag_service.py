@@ -356,8 +356,12 @@ async def retrieve_for_chapter(
 async def recalculate_chapter_rag_stats(
     db: AsyncSession,
     chapter_id: int,
-) -> None:
-    """Recompute ``rag_doc_count`` and ``rag_chunk_count`` for a chapter."""
+) -> tuple[int, int]:
+    """Recompute and return (doc_count, chunk_count) for a chapter.
+
+    These stats are now computed dynamically rather than stored on the
+    Chapter model, so this function simply queries and returns the values.
+    """
     doc_count = await db.scalar(
         select(func.count(Document.id))
         .where(Document.chapter_id == chapter_id)
@@ -367,9 +371,4 @@ async def recalculate_chapter_rag_stats(
         select(func.count(DocumentChunk.id))
         .where(DocumentChunk.chapter_id == chapter_id)
     )
-
-    chapter = await db.get(Chapter, chapter_id)
-    if chapter:
-        chapter.rag_doc_count = doc_count or 0
-        chapter.rag_chunk_count = chunk_count or 0
-        await db.flush()
+    return doc_count or 0, chunk_count or 0

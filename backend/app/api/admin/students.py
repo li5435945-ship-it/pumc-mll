@@ -436,7 +436,6 @@ async def import_students_from_excel(
         4 columns: A=email, B=password, C=group, D=nickname
     """
     import openpyxl
-    from fastapi import File, UploadFile
 
     # Validate file extension
     filename = file.filename or "upload.xlsx"

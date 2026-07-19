@@ -1,6 +1,7 @@
 """Admin Courses API - CRUD + Prompt configuration."""
 import os
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -21,13 +22,49 @@ COVER_ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 router = APIRouter(prefix="/admin", tags=["管理后台-课程"])
 
 
-class CourseOut:
-    pass
+# ── Request/Response Schemas ──────────────────────────────────────
+
+class CourseListItem(BaseModel):
+    id: int
+    name: str
+    cover_url: Optional[str] = None
+    intro: Optional[str] = None
+    status: str
+    created_at: Optional[str] = None
+
+
+class CourseCreateRequest(BaseModel):
+    name: str
+    intro: Optional[str] = None
+    goals: Optional[str] = None
+
+
+class CourseUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    intro: Optional[str] = None
+    goals: Optional[str] = None
+    prompt_review: Optional[str] = None
+    prompt_reply: Optional[str] = None
+    prompt_recommend: Optional[str] = None
+    status: Optional[str] = None
+
+
+class ChapterCreateRequest(BaseModel):
+    name: str
+    sort_order: int = 0
+    open_at: Optional[str] = None
+    rag_enabled: bool = False
+
+
+class ChapterUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    sort_order: Optional[int] = None
+    open_at: Optional[str] = None
 
 
 # ── 1. GET /admin/courses ─────────────────────────────────────────
 
-@router.get("/courses", response_model=ApiResponse[list[dict]])
+@router.get("/courses", response_model=ApiResponse[list[CourseListItem]])
 async def list_courses(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_admin_user),
@@ -36,14 +73,14 @@ async def list_courses(
     result = await db.execute(select(Course).order_by(Course.id))
     courses = result.scalars().all()
     return ApiResponse(data=[
-        {
-            "id": c.id,
-            "name": c.name,
-            "cover_url": c.cover_url,
-            "intro": c.description,
-            "status": c.status,
-            "created_at": c.created_at.isoformat() if c.created_at else None,
-        }
+        CourseListItem(
+            id=c.id,
+            name=c.name,
+            cover_url=c.cover_url,
+            intro=c.description,
+            status=c.status,
+            created_at=c.created_at.isoformat() if c.created_at else None,
+        )
         for c in courses
     ])
 
@@ -52,15 +89,15 @@ async def list_courses(
 
 @router.post("/courses", response_model=ApiResponse[dict])
 async def create_course(
-    body: dict,
+    body: CourseCreateRequest,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ):
     """Create a new course."""
     course = Course(
-        name=body.get("name", ""),
-        description=body.get("intro"),
-        learning_objectives=body.get("goals"),
+        name=body.name,
+        description=body.intro,
+        learning_objectives=body.goals,
         status="draft",
     )
     db.add(course)
@@ -102,7 +139,7 @@ async def get_course(
 @router.put("/courses/{course_id}", response_model=ApiResponse[dict])
 async def update_course(
     course_id: int,
-    body: dict,
+    body: CourseUpdateRequest,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ):
@@ -122,9 +159,10 @@ async def update_course(
         "prompt_recommend": "recommend_prompt",
         "status": "status",
     }
+    update_data = body.model_dump(exclude_unset=True)
     for frontend_field, model_field in field_mapping.items():
-        if frontend_field in body:
-            setattr(course, model_field, body[frontend_field])
+        if frontend_field in update_data:
+            setattr(course, model_field, update_data[frontend_field])
 
     await db.flush()
     await db.refresh(course)
@@ -254,7 +292,7 @@ async def list_chapters_admin(
 @router.post("/courses/{course_id}/chapters", response_model=ApiResponse[dict])
 async def create_chapter(
     course_id: int,
-    body: dict,
+    body: ChapterCreateRequest,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ):
@@ -266,10 +304,10 @@ async def create_chapter(
 
     chapter = Chapter(
         course_id=course_id,
-        name=body.get("name", ""),
-        sort_order=body.get("sort_order", 0),
-        open_at=body.get("open_at"),
-        rag_enabled=body.get("rag_enabled", False),
+        name=body.name,
+        sort_order=body.sort_order,
+        open_at=body.open_at,
+        rag_enabled=body.rag_enabled,
     )
     db.add(chapter)
     await db.flush()
@@ -290,7 +328,7 @@ async def create_chapter(
 @router.put("/chapters/{chapter_id}", response_model=ApiResponse[dict])
 async def update_chapter(
     chapter_id: int,
-    body: dict,
+    body: ChapterUpdateRequest,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_admin_user),
 ):
@@ -301,12 +339,13 @@ async def update_chapter(
         raise HTTPException(status_code=404, detail="章节不存在")
 
     # Update fields if provided
-    if "name" in body:
-        chapter.name = body["name"]
-    if "sort_order" in body:
-        chapter.sort_order = body["sort_order"]
-    if "open_at" in body:
-        chapter.open_at = body["open_at"]
+    update_data = body.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        chapter.name = update_data["name"]
+    if "sort_order" in update_data:
+        chapter.sort_order = update_data["sort_order"]
+    if "open_at" in update_data:
+        chapter.open_at = update_data["open_at"]
 
     await db.flush()
     await db.refresh(chapter)

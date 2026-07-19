@@ -255,10 +255,11 @@ class LLMService:
 
 
 # ---------------------------------------------------------------------------
-# Singleton accessor
+# Singleton accessor (auto-refreshes when API key changes)
 # ---------------------------------------------------------------------------
 
 _llm_service: Optional[LLMService] = None
+_cached_api_key: Optional[str] = None
 
 
 def get_llm_service() -> LLMService:
@@ -267,18 +268,36 @@ def get_llm_service() -> LLMService:
     the application settings.
 
     The instance is lazily created on first call and reused thereafter.
+    If the API key changes (e.g. after editing .env.prod and restarting),
+    the service is automatically recreated with the new key.
     """
-    global _llm_service  # noqa: PLW0603
-    if _llm_service is None:
-        settings = get_settings()
-        if not settings.DEEPSEEK_API_KEY or settings.DEEPSEEK_API_KEY == "sk-your-key-here":
+    global _llm_service, _cached_api_key  # noqa: PLW0603
+
+    settings = get_settings()
+    current_key = settings.DEEPSEEK_API_KEY
+
+    # Recreate if first call or if the API key has changed
+    if _llm_service is None or current_key != _cached_api_key:
+        if not current_key or current_key == "sk-your-key-here":
             logger.error("DEEPSEEK_API_KEY not configured -- AI features will not work")
             raise RuntimeError(
                 "DEEPSEEK_API_KEY is not configured. "
                 "Please set it in your .env file to enable AI features."
             )
+
+        # Close old client if recreating
+        if _llm_service is not None:
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(_llm_service.close())
+            except RuntimeError:
+                pass
+
         _llm_service = LLMService(
-            api_key=settings.DEEPSEEK_API_KEY,
+            api_key=current_key,
             base_url=settings.DEEPSEEK_BASE_URL,
         )
+        _cached_api_key = current_key
+
     return _llm_service
